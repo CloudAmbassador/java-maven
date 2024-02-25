@@ -1,33 +1,41 @@
-pipeline {
-    agent any  
+def gv
+
+pipeline {   
+    agent any
     tools {
         maven 'maven-3.9'
     }
     stages {
+        stage("init") {
+            steps {
+                script {
+                    gv = load "script.groovy"
+                }
+            }
+        }
         stage("build jar") {
             steps {
-                script{
-                    echo 'building the application...'
-                    sh 'mvn package'
+                script {
+                    gv.buildJar()
+
                 }
             }
         }
+
         stage("build image") {
             steps {
-                script{
-                    echo 'building the docker image...'
-                    withCredentials([usernamePassword(credentialsId: 'docker-hub-repo', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
-                        sh 'docker build -t sunbestamb/demo:jma-2.0 .'
-                        sh 'echo $PASS | docker login -u $USER --password-stdin'
-                        sh 'docker push sunbestamb/demo:jma-2.0'
-                    }
+                script {
+                    gv.buildImage()
                 }
             }
         }
-        stage('deploy') {
+
+        stage("deploy") {
             steps {
-                echo 'deploying the application...'
+                script {
+                    gv.deployApp()
+                }
             }
-        }
+        }               
     }
-}
+} 
